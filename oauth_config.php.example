@@ -21,8 +21,5 @@ define('OAUTH_SCOPES', 'openid profile email');
 // Enable/Disable SSO
 define('SSO_ENABLED', !empty(OAUTH_CLIENT_ID) && !empty(OAUTH_CLIENT_SECRET));
 
-// Debug Mode - Set to true to see userinfo data
-define('OAUTH_DEBUG', getenv('OAUTH_DEBUG') ?: false);
-
 ?>
 

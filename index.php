@@ -483,14 +483,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </a>
         <?php endif; ?>
         
-        <?php if (defined('OAUTH_DEBUG') && OAUTH_DEBUG): ?>
-        <!-- Debug Link -->
-        <div class="text-center mt-3">
-            <a href="oauth_debug.php" class="text-decoration-none" style="color: rgba(255, 255, 255, 0.5); font-size: 12px;">
-                <i class="fas fa-bug"></i> View OAuth Debug Data
-            </a>
-        </div>
-        <?php endif; ?>
     </div>
     
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

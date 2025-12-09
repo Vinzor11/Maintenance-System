@@ -103,7 +103,6 @@ Maintenance-System/
 ├── manage_request.php        # Request management page
 ├── oauth_callback.php        # OAuth callback handler
 ├── oauth_redirect.php        # OAuth redirect handler
-├── oauth_debug.php           # OAuth debug page
 ├── db.php                    # Database configuration (not in repo)
 ├── db.php.example            # Database config template
 ├── oauth_config.php          # OAuth configuration (not in repo)
@@ -119,15 +118,6 @@ Maintenance-System/
 - Keep OAuth client secrets secure
 - Regularly update dependencies
 - Use HTTPS in production
-
-## Debug Mode
-
-Enable debug mode in `oauth_config.php` to view OAuth userinfo data:
-```php
-define('OAUTH_DEBUG', true);
-```
-
-This will show a debug page after SSO login displaying all received userinfo data.
 
 ## Support
 

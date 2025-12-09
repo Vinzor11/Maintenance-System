@@ -15,11 +15,6 @@ if (!SSO_ENABLED) {
 $state = bin2hex(random_bytes(16));
 $_SESSION['oauth_state'] = $state;
 
-// Set flag to show debug page after successful SSO login (if debug mode is enabled)
-if (defined('OAUTH_DEBUG') && OAUTH_DEBUG) {
-    $_SESSION['oauth_show_debug'] = true;
-}
-
 // Build authorization URL
 $params = [
     'client_id' => OAUTH_CLIENT_ID,

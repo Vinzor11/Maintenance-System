@@ -125,46 +125,6 @@ try {
         $role = 'admin';
     }
     
-    // Build role analysis string for debug page
-    $role_analysis = "Role Determination Process:\n";
-    $role_analysis .= "==========================\n\n";
-    $role_analysis .= "Checking 'roles' field (array) for maintenance-director or maintenance-head:\n";
-    if (isset($userinfo['roles']) && is_array($userinfo['roles'])) {
-        $role_analysis .= "   - Found array with " . count($userinfo['roles']) . " item(s)\n";
-        foreach ($userinfo['roles'] as $r) {
-            $role_value = is_string($r) ? trim($r) : (string)$r;
-            $role_value_lower = strtolower($role_value);
-            $role_analysis .= "   - Checking: '{$role_value}'\n";
-            if ($role_value_lower === 'maintenance-director' || 
-                $role_value_lower === 'maintenance_director' ||
-                $role_value_lower === 'maintenance-head' ||
-                $role_value_lower === 'maintenance_head') {
-                $role_analysis .= "     ✓ Matches admin criteria (maintenance-director or maintenance-head)\n";
-            } else {
-                $role_analysis .= "     ✗ Does not match admin criteria\n";
-            }
-        }
-    } else {
-        $role_analysis .= "   - Not found or not an array\n";
-    }
-    $role_analysis .= "\nFinal Result:\n";
-    $role_analysis .= "   - Is Admin: " . ($is_admin ? 'YES' : 'NO') . "\n";
-    $role_analysis .= "   - Assigned Role: {$role}\n";
-    
-    // Store debug data in session for debug page
-    if (defined('OAUTH_DEBUG') && OAUTH_DEBUG) {
-        $_SESSION['oauth_debug_userinfo'] = $userinfo;
-        $_SESSION['oauth_debug_token'] = $token_result;
-        $_SESSION['oauth_debug_role_analysis'] = $role_analysis;
-        $_SESSION['oauth_debug_determined_role'] = $role;
-        
-        // Also log to error log
-        error_log('OAuth UserInfo Debug - Email: ' . $email);
-        error_log('OAuth UserInfo Debug - Role field: ' . (isset($userinfo['role']) ? var_export($userinfo['role'], true) : 'not set'));
-        error_log('OAuth UserInfo Debug - Roles array: ' . (isset($userinfo['roles']) ? var_export($userinfo['roles'], true) : 'not set'));
-        error_log('OAuth UserInfo Debug - Determined role: ' . $role);
-        error_log('OAuth UserInfo Debug - Is admin: ' . ($is_admin ? 'true' : 'false'));
-    }
 
     // Check if user exists by email
     $stmt = $pdo->prepare("SELECT id, username, password, role FROM users WHERE email = ?");
@@ -220,17 +180,7 @@ try {
         $_SESSION['department'] = $department; // Store department from userinfo
     }
 
-    // If debug mode is enabled and flag is set, redirect to debug page first
-    // Otherwise, redirect based on role
-    if (defined('OAUTH_DEBUG') && OAUTH_DEBUG && isset($_SESSION['oauth_show_debug']) && $_SESSION['oauth_show_debug']) {
-        // Clear the flag
-        unset($_SESSION['oauth_show_debug']);
-        // Redirect to debug page to view data
-        header('Location: oauth_debug.php');
-        exit;
-    }
-    
-    // Normal redirect based on role
+    // Redirect based on role
     if ($_SESSION['role'] === 'admin') {
         header('Location: admin_dashboard.php');
     } else {
