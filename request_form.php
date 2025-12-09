@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $desc = trim($_POST['description'] ?? '');
     $system = $_POST['system_type'] ?? '';
     $uid = $_SESSION['userid'];
+    $department = $_SESSION['department'] ?? null; // Get department from session (set during SSO login)
 
     $errors = [];
     if (!$title) $errors[] = "Title required.";
@@ -23,9 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$system) $errors[] = "System type required.";
 
     if (empty($errors)) {
-        // Insert the request
-        $stmt = $pdo->prepare("INSERT INTO maintenance_requests (user_id, title, description, system_type) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$uid, $title, $desc, $system]);
+        // Insert the request (include department if available)
+        $stmt = $pdo->prepare("INSERT INTO maintenance_requests (user_id, title, description, system_type, department) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$uid, $title, $desc, $system, $department]);
         $req_id = $pdo->lastInsertId();
 
         // Handle file uploads (if present)

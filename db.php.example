@@ -1,9 +1,11 @@
 <?php
-// db.php
+// db.php.example
+// Copy this file to db.php and fill in your database credentials
+
 $host = 'localhost';        // Database host
 $db   = 'maintenance';      // Database name
 $user = 'root';             // Database username
-$pass = 'umasa10112';                 // Database password (set it if it exists)
+$pass = '';                 // Database password (set it if it exists)
 
 try {
     $pdo = new PDO(
@@ -22,3 +24,4 @@ try {
     die("Database connection failed.");
 }
 ?>
+

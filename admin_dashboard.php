@@ -563,6 +563,7 @@ $rejected = count(array_filter($requests, fn($r) => $r['status'] == 'Rejected'))
                         <tr>
                             <th style="display:none;">ID</th>
                             <th><i class="fas fa-user"></i>Submitted By</th>
+                            <th><i class="fas fa-building"></i>Department</th>
                             <th><i class="fas fa-heading"></i>Title</th>
                             <th><i class="fas fa-exclamation-triangle"></i>Emergency</th>
                             <th><i class="fas fa-cog"></i>System</th>
@@ -578,6 +579,15 @@ $rejected = count(array_filter($requests, fn($r) => $r['status'] == 'Rejected'))
                         <tr>
                             <td style="display:none;"><?= $r['id'] ?></td>
                             <td><strong><?= htmlspecialchars($r['requester']) ?></strong></td>
+                            <td>
+                                <?php if (!empty($r['department'])): ?>
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-building me-1"></i><?= htmlspecialchars($r['department']) ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
                             <td><?= htmlspecialchars($r['title']) ?></td>
                             <td>
                                 <?php if (!empty($r['emergency_flag'])): ?>

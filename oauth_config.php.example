@@ -1,0 +1,28 @@
+<?php
+// oauth_config.php.example
+// Copy this file to oauth_config.php and fill in your OAuth credentials
+
+// OAuth 2.0 SSO Configuration
+
+// OAuth Provider (HR System) Configuration
+define('OAUTH_PROVIDER_URL', getenv('OAUTH_PROVIDER_URL') ?: 'https://your-oauth-provider.com');
+define('OAUTH_CLIENT_ID', getenv('OAUTH_CLIENT_ID') ?: 'your-client-id-here');
+define('OAUTH_CLIENT_SECRET', getenv('OAUTH_CLIENT_SECRET') ?: 'your-client-secret-here');
+define('OAUTH_REDIRECT_URI', getenv('OAUTH_REDIRECT_URI') ?: 'http://localhost/maintenance-management-system/oauth_callback.php');
+
+// OAuth Endpoints
+define('OAUTH_AUTHORIZE_URL', OAUTH_PROVIDER_URL . '/oauth/authorize');
+define('OAUTH_TOKEN_URL', OAUTH_PROVIDER_URL . '/oauth/token');
+define('OAUTH_USERINFO_URL', OAUTH_PROVIDER_URL . '/oauth/userinfo');
+
+// OAuth Scopes
+define('OAUTH_SCOPES', 'openid profile email');
+
+// Enable/Disable SSO
+define('SSO_ENABLED', !empty(OAUTH_CLIENT_ID) && !empty(OAUTH_CLIENT_SECRET));
+
+// Debug Mode - Set to true to see userinfo data
+define('OAUTH_DEBUG', getenv('OAUTH_DEBUG') ?: false);
+
+?>
+

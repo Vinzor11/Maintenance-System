@@ -1,73 +1,32 @@
 <?php
 session_start();
 require 'db.php';
+require 'oauth_config.php';
 
 // Authentication Logic
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? 'login';
-    
-    if ($action === 'signup') {
-        // Sign Up Logic
-        $username = trim($_POST['username'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $confirm_password = $_POST['confirm_password'] ?? '';
-        
-        if ($username && $password && $confirm_password) {
-            if ($password !== $confirm_password) {
-                $error = 'Passwords do not match.';
-            } else if (strlen($password) < 6) {
-                $error = 'Password must be at least 6 characters long.';
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+    if ($username && $password) {
+        $stmt = $pdo->prepare("SELECT id, username, password, role FROM users WHERE username = ?");
+        $stmt->execute([$username]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($user && password_verify($password, $user['password'])) {
+            $_SESSION['userid'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['role'] = $user['role'];
+            if ($user['role'] === 'admin') {
+                header('Location: admin_dashboard.php');
+                exit;
             } else {
-                // Check if username already exists
-                $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
-                $stmt->execute([$username]);
-                if ($stmt->fetch()) {
-                    $error = 'Username already exists. Please choose another.';
-                } else {
-                    // Create new user with 'user' role
-                    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                    $email = trim($_POST['email'] ?? '');
-                    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    $error = "Please enter a valid email address.";
-                    // Show error to user
-                    }
-
-                    $stmt = $pdo->prepare("INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, 'user')");
-                    if ($stmt->execute([$username, $hashed_password,$email])) {
-                        $success = 'Account created successfully! Please log in.';
-                    } else {
-                        $error = 'Failed to create account. Please try again.';
-                    }
-                }
+                header('Location: dashboard.php');
+                exit;
             }
         } else {
-            $error = 'Please fill in all fields.';
+            $error = 'Invalid username or password.';
         }
     } else {
-        
-        $username = trim($_POST['username'] ?? '');
-        $password = $_POST['password'] ?? '';
-        if ($username && $password) {
-            $stmt = $pdo->prepare("SELECT id, username, password, role FROM users WHERE username = ?");
-            $stmt->execute([$username]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($user && password_verify($password, $user['password'])) {
-                $_SESSION['userid'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
-                $_SESSION['role'] = $user['role'];
-                if ($user['role'] === 'admin') {
-                    header('Location: admin_dashboard.php');
-                    exit;
-                } else {
-                    header('Location: dashboard.php');
-                    exit;
-                }
-            } else {
-                $error = 'Invalid username or password.';
-            }
-        } else {
-            $error = 'Please enter both username and password.';
-        }
+        $error = 'Please enter both username and password.';
     }
 }
 ?>
@@ -195,24 +154,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         letter-spacing: -0.5px;
       }
       
-      .toggle-form {
-        text-align: center;
-        margin-top: 24px;
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 14px;
-      }
-      
-      .toggle-form a {
-        color: #3b82f6;
-        text-decoration: none;
-        font-weight: 600;
-        transition: color 0.3s ease;
-      }
-      
-      .toggle-form a:hover {
-        color: #60a5fa;
-      }
-      
       .login-card .form-label {
         color: rgba(255, 255, 255, 0.9);
         font-weight: 500;
@@ -274,6 +215,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         border-radius: 12px;
         padding: 12px 16px;
         font-size: 14px;
+      }
+      
+      /* SSO Login Styles */
+      .sso-divider {
+        display: flex;
+        align-items: center;
+        margin: 24px 0;
+        gap: 12px;
+      }
+      
+      .divider-line {
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+      
+      .divider-text {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      
+      .btn-sso {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #fff;
+        padding: 14px;
+        font-weight: 600;
+        font-size: 15px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+      
+      .btn-sso:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.25);
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+      
+      .btn-sso svg {
+        flex-shrink: 0;
       }
       
       /* Animated system title */
@@ -449,23 +438,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- LOGIN CARD -->
     <div class="login-card" id="loginCard">
-        <h4 class="text-center" id="formTitle">Welcome</h4>
+        <h4 class="text-center">Welcome</h4>
+        <?php 
+        // Check for OAuth errors from callback
+        $oauth_error = $_GET['error'] ?? '';
+        if ($oauth_error) {
+            $error = $oauth_error;
+        }
+        ?>
         <?php if (!empty($error)): ?>
             <div class="alert alert-danger" id="timed-alert"><?= htmlspecialchars($error) ?></div>
             <script>
                 setTimeout(function(){ var el = document.getElementById('timed-alert'); if(el){ el.style.display='none'; }}, 3500);
             </script>
         <?php endif; ?>
-        <?php if (!empty($success)): ?>
-            <div class="alert alert-success" id="success-alert"><?= htmlspecialchars($success) ?></div>
-            <script>
-                setTimeout(function(){ var el = document.getElementById('success-alert'); if(el){ el.style.display='none'; }}, 3500);
-            </script>
-        <?php endif; ?>
         
         <!-- Login Form -->
         <form method="POST" action="index.php" id="loginForm">
-            <input type="hidden" name="action" value="login">
             <div class="mb-3">
                 <label for="username" class="form-label">Username</label>
                 <input type="text" name="username" id="username" class="form-control" required autofocus>
@@ -477,33 +466,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button type="submit" class="btn btn-primary w-100">Sign In</button>
         </form>
         
-        <!-- Sign Up Form (Hidden by default) -->
-        <form method="POST" action="index.php" id="signupForm" style="display: none;">
-            <input type="hidden" name="action" value="signup">
-            <div class="mb-3">
-                <label for="signup_username" class="form-label">Username</label>
-                <input type="text" name="username" id="signup_username" class="form-control" required>
-            </div>
-            <div class="mb-3">
-                <label for="signupemail" class="form-label">Email</label>
-                <input type="email" name="email" id="signupemail" class="form-control" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="signup_password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="signuppassword" name="password" required placeholder="At least 6 characters" minlength="6">
-                <small class="form-text text-muted">Password must be at least 6 characters long.</small>
-            </div>
-            <div class="mb-3">
-                <label for="confirm_password" class="form-label">Confirm Password</label>
-                <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Create Account</button>
-        </form>
-        
-        <div class="toggle-form">
-            <span id="toggleText">Don't have an account? <a href="#" id="toggleLink">Sign up</a></span>
+        <?php if (SSO_ENABLED): ?>
+        <!-- SSO Login Divider -->
+        <div class="sso-divider">
+            <div class="divider-line"></div>
+            <span class="divider-text">OR</span>
+            <div class="divider-line"></div>
         </div>
+        
+        <!-- SSO Login Button -->
+        <a href="oauth_redirect.php" class="btn btn-sso w-100">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+            </svg>
+            Sign in with HR System
+        </a>
+        <?php endif; ?>
+        
+        <?php if (defined('OAUTH_DEBUG') && OAUTH_DEBUG): ?>
+        <!-- Debug Link -->
+        <div class="text-center mt-3">
+            <a href="oauth_debug.php" class="text-decoration-none" style="color: rgba(255, 255, 255, 0.5); font-size: 12px;">
+                <i class="fas fa-bug"></i> View OAuth Debug Data
+            </a>
+        </div>
+        <?php endif; ?>
     </div>
     
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -517,32 +504,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       card.style.display = 'block';
       card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 600);
-  });
-  
-  // Toggle between login and signup forms
-  document.getElementById('toggleLink').addEventListener('click', function(e) {
-    e.preventDefault();
-    var loginForm = document.getElementById('loginForm');
-    var signupForm = document.getElementById('signupForm');
-    var formTitle = document.getElementById('formTitle');
-    var toggleText = document.getElementById('toggleText');
-    
-    if (loginForm.style.display !== 'none') {
-      // Switch to signup
-      loginForm.style.display = 'none';
-      signupForm.style.display = 'block';
-      formTitle.textContent = 'Create Account';
-      toggleText.innerHTML = 'Already have an account? <a href="#" id="toggleLink">Sign in</a>';
-    } else {
-      // Switch to login
-      loginForm.style.display = 'block';
-      signupForm.style.display = 'none';
-      formTitle.textContent = 'Welcome Back';
-      toggleText.innerHTML = 'Don\'t have an account? <a href="#" id="toggleLink">Sign up</a>';
-    }
-    
-    // Re-attach event listener to the new link
-    document.getElementById('toggleLink').addEventListener('click', arguments.callee);
   });
 </script>
 </body>
